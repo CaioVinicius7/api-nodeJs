@@ -32,6 +32,11 @@ module.exports = (app) => {
             "método http": "DELETE"
          },
          {
+            "função": "Lista todos os pets",
+            "endpoint": "/pets",
+            "método http": "GET"
+         },
+         {
             "função": "Adicionar um atendimento",
             "endpoint": "/pets",
             "método http": "POST"
@@ -43,25 +48,36 @@ module.exports = (app) => {
    });
    
    // Lista todos os atendimentos
-   app.get("/atendimentos", (req, res) => {
-      Atendimento.lista(res);
+   app.get("/atendimentos", async (req, res) => {
+
+      await Atendimento.lista().then((resultados) => {
+         res.status(200).json(resultados);
+      }).catch((erros) => {
+         res.status(400).json(erros);
+      });
+
    });
 
    // Lista um atendimento específico
-   app.get("/atendimento/:id", (req, res) => {
+   app.get("/atendimento/:id", async (req, res) => {
 
       // Converte o id de string para number
       const id = parseInt(req.params.id);
       
-      Atendimento.buscaPorId(id, res);
+      await Atendimento.buscaPorId(id, res);
       
    });
 
    // Adiciona novos atendimentos
-   app.post("/atendimentos", (req, res) => {
+   app.post("/atendimentos", async (req, res) => {
       const atendimento = req.body;
 
-      Atendimento.adiciona(atendimento, res);
+      await Atendimento.adiciona(atendimento).then((atendimentoCadastrado) => {
+         res.status(201).json(atendimentoCadastrado);
+      }).catch((erros) => {
+         res.status(400).json(erros);
+      });
+      
    });
 
    // Edita um atendimento

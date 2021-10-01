@@ -1,72 +1,89 @@
 const moment = require("moment");
 const axios = require("axios");
-const conexao = require("../infraestrutura/conexao");
+const conexao = require("../infraestrutura/database/conexao");
+const repositorio = require("../repositorios/atendimentos");
+const { promise } = require("../infraestrutura/database/conexao");
 
 class Atendimento{
 
+   constructor(){
+
+      // Valida se a data do serviço é a mesma ou é depois da data de criaç]ao do atendimento 
+      this.dataValida = ({ data, dataCriacao }) => {
+         moment(data).isSameOrAfter(dataCriacao);
+      }
+         
+      // Valida se o nome do cliente é maior ou igual a 5 
+      this.clientevalido = (tamanho) => {
+         tamanho >= 5;
+      }
+
+      // Função de validação
+      this.valida = (parametros) => {
+         this.validacoes.filter(campo => {
+            const { nome } = campo;
+            const parametro = parametros[nome];
+         });
+
+         return !campo.valido(parametro);
+      }
+
+      // Objeto para verificar as validações
+      this.validacoes = [
+         {
+            nome: "data",
+            valido: this.dataValida,
+            mensagem: "A data deve ser maior ou igual a data atual"
+         },
+         {
+            nome: "cliente",
+            valido: this.clientevalido,
+            mensagem: "O nome do cliente deve ter pelo menos 5 caracteres"
+         }
+      ]; 
+
+   }
+
    // Método para adicionar novo atendimento
-   adiciona(atendimento, res){
+   adiciona(atendimento){
       
       // Pega a data de criação, formata a data do atendimento e cria um objeto novo incluindo essas datas
       const dataCriacao = moment().format("YYYY-MM-DD HH:MM:SS");
       const data = moment(atendimento.data, "DD/MM/YYYY").format("YYYY-MM-DD HH:mm:ss");
       const atendimentoDatado = { ...atendimento, dataCriacao, data }; 
 
-      // Valida se a data do serviço é a mesma ou é depois da data de criaç]ao do atendimento 
-      const dataValida = moment(data).isSameOrAfter(dataCriacao);
-
-      // Valida se o nome do cliente é maior ou igual a 5 
-      const clientevalido = atendimento.cliente.length >= 5;
-
-      // Objeto para verificar as validações
-      const validacoes = [
-         {
-            nome: "data",
-            valido: dataValida,
-            mensagem: "A data deve ser maior ou igual a data atual"
+      const parametros = {
+         data: {
+            data,
+            dataCriacao
          },
-         {
-            nome: "cliente",
-            valido: clientevalido,
-            mensagem: "O nome do cliente deve ter pelo menos 5 caracteres"
+         cliente: {
+            tamanho: atendimento.cliente.length
          }
-      ]; 
+      };
 
       // Verifica se existiram erros na validação
-      const erros = validacoes.filter((campo) => !campo.valido);
+      const erros = this.valida(parametros);
       const existemErros = erros.length;
 
       if(existemErros){
-         res.status(400).json(erros);
+         return new Promise((resolve, reject) => {
+            reject(erros)
+         });
       }else{
 
-         const sql = "INSERT INTO atendimentos SET ?";
-   
-         conexao.query(sql, atendimentoDatado, (erro, resultados) => {
-   
-            if(erro){
-               res.status(400).json(erro);
-            }else{
-               res.status(201).json({atendimento});
-            }
-   
+         return repositorio.adiciona(atendimentoDatado).then((resultados) => {
+            const id = resultados.insertId;
+            return { ...atendimento, id };
          });
-
+   
       }
       
    }
 
    // Método para listar todos os atendimentos
-   lista(res){
-      const sql = "SELECT * FROM atendimentos";
-
-      conexao.query(sql ,(erro, resultados) => {
-         if(erro){
-            res.status(400).json(erro);
-         }else{
-            res.status(201).json(resultados);
-         }
-      });
+   lista(){
+      return repositorio.lista();
    }
 
    // Método para buscar um atendiment específico por id
