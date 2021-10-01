@@ -30,6 +30,11 @@ module.exports = (app) => {
             "função": "Excluir um atendimento",
             "endpoint": "/atendimentos/id",
             "método http": "DELETE"
+         },
+         {
+            "função": "Adicionar um atendimento",
+            "endpoint": "/pets",
+            "método http": "POST"
          }
       ];
 

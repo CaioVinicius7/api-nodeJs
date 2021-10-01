@@ -4,6 +4,7 @@ class Tabelas{
       this.conexao = conexao;
 
       this.criarAtendimentos();
+      this.criaPets();
    }
 
    // Cria a tabela de atendimentos
@@ -15,6 +16,19 @@ class Tabelas{
             console.log(`Ocorreu um erro: ${erro}`);
          }else{
             console.log("Tabela de atendimentos criada com sucesso!");
+         }
+      });
+   }
+
+   // Cria a tabela de pets 
+   criaPets(){
+      const sql = "CREATE TABLE IF NOT EXISTS pets (id int NOT NULL AUTO_INCREMENT, nome varchar(50), imagem varchar(200), PRIMARY KEY(id))";
+
+      this.conexao.query(sql, (erro) => {
+         if(erro){
+            console.log(`Ocorreu um erro: ${erro}`);
+         }else{
+            console.log("Tabela de pets criada com sucesso!");
          }
       });
    }
